@@ -1,0 +1,16 @@
+data_rootdir: './dataset'
+
+model:
+  model_dim: 256
+  feedforward_dim: 512
+  depth: 6
+  heads: 8
+  num_classes: 10
+  input_channels: 3
+  image_size: 32
+  attention_type: 'linear'
+
+training:
+  output_dir: './output'
+  max_epochs: 200
+  precision: 32
