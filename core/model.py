@@ -5,32 +5,37 @@ from .attention import *
 
 class MultiHeadAttention(torch.nn.Module):
     attention = {
-        'full': full_attention,
-        'linear': linear_full_attention
+        'softmax': SoftmaxAttention,
+        'linear': LinearAttention,
+        'linformer': LinformerAttention,
+        'random_feature': RandomFeatureAttention,
+        'nystrom': NystromAttention
     }
 
-    def __init__(self, dim, heads, attention_type):
+    def __init__(self, seq_length, dim, heads, attention_type):
         super(MultiHeadAttention, self).__init__()
         self.attention_type = attention_type
         assert dim % heads == 0
         head_dim = dim // heads
         self.heads = heads
 
-        self.qkv_projection = torch.nn.Linear(dim, head_dim * 3)
-        self.out_projection = torch.nn.Linear(head_dim, dim)
+        self.qkv_projection = torch.nn.Linear(dim, dim * 3)
+        self.out_projection = torch.nn.Linear(dim, dim)
+
+        self.attention_layer = self.attention[attention_type](seq_length=seq_length, p_dim=seq_length//4, heads=heads, head_dim=head_dim)
 
     def forward(self, x):
         qkv = self.qkv_projection(x).chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv)
-        out = self.attention[self.attention_type](q, k, v)
+        out = self.attention_layer(q, k, v)
         return self.out_projection(rearrange(out, 'b h n d -> b n (h d)'))
 
 
 class TransformerBlock(torch.nn.Module):
-    def __init__(self, dim, heads, feedforward_dim, attention_type):
+    def __init__(self, seq_length, dim, heads, feedforward_dim, attention_type):
         super(TransformerBlock, self).__init__()
 
-        self.mha = MultiHeadAttention(dim, heads, attention_type)
+        self.mha = MultiHeadAttention(seq_length, dim, heads, attention_type)
 
         self.feedforward = torch.nn.Sequential(
             torch.nn.Linear(dim, feedforward_dim),
@@ -55,7 +60,7 @@ class ViT(torch.nn.Module):
 
         self.transformer = torch.nn.Sequential()
         for i in range(depth):
-            self.transformer.add_module(f'block_{i}', TransformerBlock(dim, heads, feedforward_dim, attention_type))
+            self.transformer.add_module(f'block_{i}', TransformerBlock(image_size ** 2, dim, heads, feedforward_dim, attention_type))
 
         self.output_projection = torch.nn.Sequential(
             torch.nn.LayerNorm(dim),
