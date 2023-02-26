@@ -2,15 +2,15 @@ import os
 
 import pytorch_lightning as pl
 import torch
+import torchmetrics
 import yaml
 from torchvision import transforms
 from torchvision.datasets import CIFAR10
 
 from core.model import ViT
 
-pl.seed_everything(0)
+pl.seed_everything(42)
 torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
 
 
 class ModelLightning(pl.LightningModule):
@@ -25,6 +25,8 @@ class ModelLightning(pl.LightningModule):
             feedforward_dim=config['feedforward_dim'],
             attention_type=config['attention_type']
         )
+        self.train_acc = torchmetrics.Accuracy('multiclass', config['num_classes'])
+        self.valid_acc = torchmetrics.Accuracy('multiclass', config['num_classes'])
 
     def forward(self, x):
         return self.model(x)
@@ -38,6 +40,8 @@ class ModelLightning(pl.LightningModule):
         y_hat = self(x)
         loss = self.compute_loss(y_hat, y)
         self.log('train_loss', loss, prog_bar=False)
+        self.train_acc(y_hat, y)
+        self.log('train_acc', self.train_acc, on_step=True, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -45,6 +49,8 @@ class ModelLightning(pl.LightningModule):
         y_hat = self(x)
         loss = self.compute_loss(y_hat, y)
         self.log('valid_loss', loss, prog_bar=False)
+        self.valid_acc(y_hat, y)
+        self.log('valid_acc', self.valid_acc, on_step=True, on_epoch=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4)
@@ -82,9 +88,10 @@ if __name__ == '__main__':
     checkpoint = pl.callbacks.ModelCheckpoint(dirpath=os.path.join(train_cfg['output_dir'], 'ckpts'),
                                               filename='{epoch}-{train_loss:.3f}-{valid_loss:.3f}',
                                               save_on_train_epoch_end=True, save_top_k=3, monitor='valid_loss')
-
-    trainer = pl.Trainer(accelerator='gpu', devices=1, auto_select_gpus=True, precision=train_cfg['precision'],
-                         max_epochs=train_cfg['max_epochs'], callbacks=[checkpoint], logger=tb_logger)
+    early_stop = pl.callbacks.EarlyStopping(monitor='valid_loss', patience=5, check_on_train_epoch_end=True,
+                                            verbose=False)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, precision=train_cfg['precision'],
+                         max_epochs=train_cfg['max_epochs'], callbacks=[checkpoint, early_stop], logger=tb_logger)
 
     # perform training
     trainer.fit(model, train_loader, valid_loader)

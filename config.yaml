@@ -3,7 +3,7 @@ data_rootdir: './dataset'
 model:
   model_dim: 256
   feedforward_dim: 512
-  depth: 6
+  depth: 4
   heads: 8
   num_classes: 10
   input_channels: 3

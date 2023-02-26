@@ -22,7 +22,7 @@ class MultiHeadAttention(torch.nn.Module):
         self.qkv_projection = torch.nn.Linear(dim, dim * 3)
         self.out_projection = torch.nn.Linear(dim, dim)
 
-        self.attention_layer = self.attention[attention_type](seq_length=seq_length, p_dim=seq_length//4, heads=heads, head_dim=head_dim)
+        self.attention_layer = self.attention[attention_type](seq_length=seq_length, p_dim=seq_length//8, heads=heads, head_dim=head_dim)
 
     def forward(self, x):
         qkv = self.qkv_projection(x).chunk(3, dim=-1)
