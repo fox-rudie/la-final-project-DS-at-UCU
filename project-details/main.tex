@@ -1,0 +1,273 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% University Assignment Title Page 
+% LaTeX Template
+% Version 1.0 (27/12/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% WikiBooks (http://en.wikibooks.org/wiki/LaTeX/Title_Creation)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+% Instructions for using this template:
+% This title page is capable of being compiled as is. This is not useful for 
+% including it in another document. To do this, you have two options: 
+%
+% 1) Copy/paste everything between \begin{document} and \end{document} 
+% starting at \begin{titlepage} and paste this into another LaTeX file where you 
+% want your title page.
+% OR
+% 2) Remove everything outside the \begin{titlepage} and \end{titlepage} and 
+% move this file to the same directory as the LaTeX file you wish to add it to. 
+% Then add \input{./title_page_1.tex} to your LaTeX file where you want your
+% title page.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\title{Title page with logo}
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+
+\usepackage{cite}
+\usepackage{algorithmic}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{hyperref}
+
+
+
+\textheight=250truemm \textwidth=160truemm 
+\hoffset=-10truemm \voffset=-20truemm
+
+\begin{document}
+
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\LARGE Ukrainian Catholic University}\\[1cm] % Name of your university/college
+\textsc{\Large  Faculty of Applied Sciences}\\[0.5cm] % Major heading such as course name
+\textsc{\large Data Science Master Programme}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+\vspace*{1cm}
+
+\HRule \\[0.4cm]
+{ \huge \bfseries A Comparative Analysis of Linear Algebra Methods for Efficient Transformer Attention in Image Classification}\\[10pt]
+{\Large \bfseries Linear Algebra final project report}\\[0.4cm] % Title of your document
+\HRule \\[0.8cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+\vspace*{0.5cm}
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+\Large \emph{Authors:}\\
+Anton \textsc{Brazhnyi}\\Olexandr \textsc{Korniienko}\\Andrii \textsc{Ruda}\\[1cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+\vspace*{1cm}
+{\large 28 February 2023}\\[2cm] % Date, change the \today to a set date if you want to be precise
+
+%----------------------------------------------------------------------------------------
+%	LOGO SECTION
+%----------------------------------------------------------------------------------------
+
+\includegraphics[height=5cm]{UCU-Apps.png}\\[1cm] % Include a department/university logo - this will require the graphicx package
+ 
+%----------------------------------------------------------------------------------------
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+\begin{abstract}
+Attention is a critical component of transformer models, but its computational complexity limits its scalability. This project investigates linear algebra-based approaches to optimize the attention mechanism's performance, including low-rank approximations, kernels/factorization, and other methods. We provide a detailed analysis of the computational complexity and compare their empirical performance on an image classification task.
+\end{abstract}
+
+\section{Introduction}
+The Transformer architecture has become a cornerstone in modern deep learning and has led to numerous breakthroughs in natural language processing, computer vision, and other areas. The Transformer's attention mechanism has been shown to be a crucial component in its success. However, computing the attention scores for all pairs of positions in an input sequence results in quadratic time and memory complexity with respect to the sequence length, making the mechanizm slow and memory-intensive for long input sequences.
+
+In this project, we explore various methods for optimizing the attention mechanism in the Transformer architecture. We focus on five methods: 
+\begin{enumerate}
+\item Full Attention
+\item Linear Attention
+\item Linformer Attention
+\item Random Feature Attention
+\item Nystrom Attention
+\end{enumerate}
+Each method uses linear algebra techniques to optimize the attention mechanism and reduce the computational and memory costs of the Transformer architecture. We will provide an overview of each method and compare their computational complexities and performance on an image classification task.
+
+
+\section{Quick methods overview}
+
+\subsection{Full Attention}
+
+Attention calculates a weighted average of the feature representation with weight proportional to the similarity score between pairs of representations. Let’s consider input $X^{n \times d}$ and projections $W_q \in R^{d \times d_q}$, $W_k \in R^{d \times d_k}$, $W_v \in R^{d \times d_v}$ referred as query, key, and value projections, where $n$ is the input length. The outputs are then computed as $Q=XW_q$, $K=XW_k$, $V=XW_v$.
+The attention layer is defined as 
+
+$$ \text{Attention}(Q, K, V) = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big)V $$ 
+
+which requires $O(n2d)$ steps to compute and scales poorly with the large input size. An intuitive illustration of the Attention layer is presented below (source: https://theaisummer.com/self-attention/).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{self-attention-explained.png}
+\caption{\label{fig:self-attention}Illustration of self-attention mechanism.}
+\end{figure}
+
+However, the scaled dot-product attention isn't simply applied to the queries, keys and values. Instead of this single attention components with: queries, keys and values are splitted into $ h $ heads and the scaled dot-product attention is calculated over all heads in parallel.
+
+$$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1,...,\text{head}_h)W^O $$
+
+$$ \text{head}^i = \text{Attention}(QW_q^i, KW_k^i, VW_v^i) $$
+
+The standard attention mechanism used in the Transformer architecture computes attention scores for all pairs of positions in the input sequence, resulting in quadratic time and memory complexity.
+
+
+\subsection{Linear Attention}
+
+Dot-product attention has wide applications in computer vision and natural language processing. However, its memory and computational costs grow quadratically with the input size. Such growth prohibits its application on high-resolution inputs. For this purpose, the efficient attention mechanism equivalent to dot-product attention is used. Linear Attention mechanism allows to reduce memory and computational costs to remedy this drawback. At the same time, empirical evaluations \ref{} demonstrated the effectiveness of its advantages.
+
+Efficient attention proposes the individual feature vectors $ X \in R^{n \times d} $ still pass through three linear layers to form the queries Q keys K, and values V. However, instead of interpreting the keys as n feature vectors in $R^{d_k}$, the module regards them as $d_k$ single-channel feature maps. Efficient attention uses each feature map as an overall weighting position and aggregates the value features through weighted summation to form a global context vector \ref{}. 
+
+The equation describes linear attention presented below:
+
+$$ \text{Linear Attention}(Q, K, V) = \text{Softmax}_{row} \big(Q)\big ( \text{Softmax}_{col} \big( K \big)^T V) $$ 
+
+To proof equivalence of the considered method to dot-product attention let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
+$$ \text{Attention}(Q, K, V) = \big( \frac{QK^T}{d_k} \big)V $$ 
+
+The linear attention can be exressed as
+$$ \text{Linear Attention}(Q, K, V) =  \big( \frac{Q}{\sqrt(d_k)} \big) \big( \frac{K^T}{\sqrt(d_k)} V ) = \frac{1}{d_k} Q \big( K^T V \big) = \frac{1}{d_k} \big(Q K^T\big) V = \text{Attention}(Q, K, V)$$ 
+
+The main advantages of the algorithms is:
+
+\begin{itemize}
+\item improved computational complexity from $ O(d * n^2) $ (for dot-product attention) to $ O(d^2 * n) $ for linear attention
+\item increase memory efficiency from  $ O(n^2) $ to  $ O(dn+d^2) $ respectively.
+\end{itemize}
+
+
+\subsection{Linformer Attention}
+Linformer Attention uses low-rank approximations to the attention mechanism to reduce computational and memory costs by compressing the key and value vectors using linear projections.
+
+\subsection{Random Feature Attention}
+Random Feature Attention uses randomized projections to approximate the attention scores using a subset of the input sequence, then uses the subset to compute the total attention scores.
+
+\subsection{Nystrom Attention}
+The method uses the Nyström approximation to estimate the attention scores using a deterministic subset of the input sequence. This method is effective in reducing computational and memory costs while maintaining a high level of accuracy.
+
+\section{Results}
+
+\subsection{Computational complexity}
+
+This section analyzes the efficiency advantage of attention approaches considered in this research over dot-product attention in memory and computation. 
+To measure computational complexity we measure inference time takes to calculate values on NVIDIA GPU T4 for $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
+
+
+\begin{figure*}[!h]
+	\centering
+	\begin{subfigure}[t]{0.4\textwidth}
+		\centering
+		\includegraphics[scale=0.4]{speed_cuda_32.png}
+		\caption{} \label{comutation-time-32}
+	\end{subfigure}\hfill
+	
+	\begin{subfigure}[t]{0.4\textwidth}
+		\centering
+		\includegraphics[scale=0.4]{speed_cuda_64.png}
+		\caption{} \label{comutation-time-64}
+	\end{subfigure}\hfill
+
+	\caption{Computation time on GPU in ms.}
+	\label{fig:comutation-time}
+\end{figure*}
+
+
+
+
+\section{Some \LaTeX{} Examples}
+\label{sec:examples}
+
+\subsection{Sections}
+
+Use section and subsection commands to organize your document. \LaTeX{} handles all the formatting and numbering automatically. Use ref and label commands for cross-references.
+
+\subsection{Comments}
+
+Comments can be added to the margins of the document using the \todo{Here's a comment in the margin!} todo command, as shown in the example on the right. You can also add inline comments too:
+
+\todo[inline, color=green!40]{This is an inline comment.}
+
+\subsection{Tables and Figures}
+
+Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the files menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:sophie} below.
+
+% Commands to include a figure:
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{sophie.jpeg}
+\caption{\label{fig:sophie}This is a figure caption.}
+\end{figure}
+
+
+\subsection{Mathematics}
+
+\LaTeX{} is great at typesetting mathematics. Let $X_1, X_2, \ldots, X_n$ be a sequence of independent and identically distributed random variables with $\text{E}[X_i] = \mu$ and $\text{Var}[X_i] = \sigma^2 < \infty$, and let
+$$S_n = \frac{X_1 + X_2 + \cdots + X_n}{n}
+      = \frac{1}{n}\sum_{i}^{n} X_i$$
+denote their mean. Then as $n$ approaches infinity, the random variables $\sqrt{n}(S_n - \mu)$ converge in distribution to a normal $\mathcal{N}(0, \sigma^2)$.
+
+\subsection{Lists}
+
+You can make lists with automatic numbering \dots
+
+\begin{enumerate}
+\item Like this,
+\item and like this.
+\end{enumerate}
+\dots or bullet points \dots
+\begin{itemize}
+\item Like this,
+\item and like this.
+\end{itemize}
+
+
+\begin{table}
+\centering
+\begin{tabular}{l|r}
+Item & Quantity \\\hline
+Widgets & 42 \\
+Gadgets & 13
+\end{tabular}
+\caption{\label{tab:widgets}An example table.}
+\end{table}
+
+
+We hope you enjoy \LaTeX ing!
+
+\end{document}
