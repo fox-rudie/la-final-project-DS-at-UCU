@@ -105,13 +105,13 @@ Anton \textsc{Brazhnyi}\\Olexandr \textsc{Korniienko}\\Andrii \textsc{Ruda}\\[1c
 \end{titlepage}
 
 \begin{abstract}
-Attention is a critical component of transformer models, but its computational complexity limits its scalability. This project investigates linear algebra-based approaches to optimize the attention mechanism's performance, including low-rank approximations, kernels/factorization, and other methods. We provide a detailed analysis of the computational complexity and compare their empirical performance on an image classification task.
+Attention is a critical component of transformer models, but its computational complexity limits its scalability. This project investigates linear algebra-based approaches to optimise the attention mechanism's performance, including low-rank approximations, kernels/factorisation, and other methods. We provide a detailed analysis of the computational complexity and compare their empirical performance on an image classification task.
 \end{abstract}
 
 \section{Introduction}
-The Transformer architecture has become a cornerstone in modern deep learning and has led to numerous breakthroughs in natural language processing, computer vision, and other areas. The Transformer's attention mechanism has been shown to be a crucial component in its success. However, computing the attention scores for all pairs of positions in an input sequence results in quadratic time and memory complexity with respect to the sequence length, making the mechanizm slow and memory-intensive for long input sequences.
+The Transformer architecture has become a cornerstone in modern deep learning and has led to numerous breakthroughs in natural language processing, computer vision, and other areas. The Transformer's attention mechanism has been shown to be a crucial component in its success. However, computing the attention scores for all pairs of positions in an input sequence results in quadratic time and memory complexity with respect to the sequence length, making the mechanism slow and memory-intensive for long input sequences.
 
-In this project, we explore various methods for optimizing the attention mechanism in the Transformer architecture. We focus on five methods: 
+In this project, we explore various methods for optimising the attention mechanism in the Transformer architecture. We focus on five methods: 
 \begin{enumerate}
 \item Full Attention
 \item Linear Attention
@@ -119,7 +119,7 @@ In this project, we explore various methods for optimizing the attention mechani
 \item Random Feature Attention
 \item Nystrom Attention
 \end{enumerate}
-Each method uses linear algebra techniques to optimize the attention mechanism and reduce the computational and memory costs of the Transformer architecture. We will provide an overview of each method and compare their computational complexities and performance on an image classification task.
+Each method uses linear algebra techniques to optimise the attention mechanism and reduce the computational and memory costs of the Transformer architecture. We will provide an overview of each method and compare their computational complexities and performance on an image classification task.
 
 
 \section{Quick methods overview}
@@ -139,7 +139,7 @@ which requires $O(n2d)$ steps to compute and scales poorly with the large input 
 \caption{\label{fig:self-attention}Illustration of self-attention mechanism.}
 \end{figure}
 
-However, the scaled dot-product attention isn't simply applied to the queries, keys and values. Instead of this single attention components with: queries, keys and values are splitted into $ h $ heads and the scaled dot-product attention is calculated over all heads in parallel.
+However, the scaled dot-product attention isn't simply applied to the queries, keys and values. Instead of this, single attention components with: queries, keys and values are splited into $ h $ heads and the scaled dot-product attention is calculated over all heads in parallel.
 
 $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1,...,\text{head}_h)W^O $$
 
@@ -158,10 +158,10 @@ The equation describes linear attention presented below:
 
 $$ \text{Linear Attention}(Q, K, V) = \text{Softmax}_{row} \big(Q)\big ( \text{Softmax}_{col} \big( K \big)^T V) $$ 
 
-To proof equivalence of the considered method to dot-product attention let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
+To proof equivalence of the considered method to dot-product attention, let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
 $$ \text{Attention}(Q, K, V) = \big( \frac{QK^T}{d_k} \big)V $$ 
 
-The linear attention can be exressed as
+The linear attention can be expressed as
 $$ \text{Linear Attention}(Q, K, V) =  \big( \frac{Q}{\sqrt(d_k)} \big) \big( \frac{K^T}{\sqrt(d_k)} V ) = \frac{1}{d_k} Q \big( K^T V \big) = \frac{1}{d_k} \big(Q K^T\big) V = \text{Attention}(Q, K, V)$$ 
 
 The main advantages of the algorithms is:
@@ -176,7 +176,7 @@ The main advantages of the algorithms is:
 Linformer Attention uses low-rank approximations to the attention mechanism to reduce computational and memory costs by compressing the key and value vectors using linear projections.
 
 \subsection{Random Feature Attention}
-Random Feature Attention uses randomized projections to approximate the attention scores using a subset of the input sequence, then uses the subset to compute the total attention scores.
+Random Feature Attention uses randomised projections to approximate the attention scores using a subset of the input sequence, then uses the subset to compute the total attention scores.
 
 \subsection{Nystrom Attention}
 The method uses the Nyström approximation to estimate the attention scores using a deterministic subset of the input sequence. This method is effective in reducing computational and memory costs while maintaining a high level of accuracy.
@@ -185,27 +185,44 @@ The method uses the Nyström approximation to estimate the attention scores usin
 
 \subsection{Computational complexity}
 
-This section analyzes the efficiency advantage of attention approaches considered in this research over dot-product attention in memory and computation. 
-To measure computational complexity we measure inference time takes to calculate values on NVIDIA GPU T4 for $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
+This section analyses the efficiency advantage of attention approaches considered in this research over dot-product attention in memory \ref{fig:comutation-time} and computation \ref{tab:mem-complexity}. 
+To measure computational complexity, we measure inference time takes to calculate values on NVIDIA GPU T4 for $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
 
 
 \begin{figure*}[!h]
 	\centering
-	\begin{subfigure}[t]{0.4\textwidth}
+	\begin{subfigure}[t]{0.5\textwidth}
 		\centering
-		\includegraphics[scale=0.4]{speed_cuda_32.png}
-		\caption{} \label{comutation-time-32}
+		\includegraphics[scale=0.5]{speed_cuda_32.png}
+		\caption{N=32} \label{comutation-time-32}
 	\end{subfigure}\hfill
-	
-	\begin{subfigure}[t]{0.4\textwidth}
+	\centering
+	\begin{subfigure}[t]{0.5\textwidth}
 		\centering
-		\includegraphics[scale=0.4]{speed_cuda_64.png}
-		\caption{} \label{comutation-time-64}
+		\includegraphics[scale=0.5]{speed_cuda_64.png}
+		\caption{N=64} \label{comutation-time-64}
 	\end{subfigure}\hfill
 
 	\caption{Computation time on GPU in ms.}
 	\label{fig:comutation-time}
 \end{figure*}
+
+
+
+
+\begin{table}
+\centering
+\begin{tabular}{l|c|c}
+Method & Memory complexity & $N=32*32, D=32$ \\\hline
+Dot-product attention & $ O(n^2) $ & $2^{20}$ \\
+Linear attention & $ O(dn+d^2) $ & $2^{11}$ \\
+Linformer Attention & ... & ... \\
+Random Feature Attention & ... & ... \\
+Nystrom Attention & ... & ...
+\end{tabular}
+\caption{\label{tab:mem-complexity}Memory usage.}
+\end{table}
+
 
 
 
@@ -269,5 +286,7 @@ Gadgets & 13
 
 
 We hope you enjoy \LaTeX ing!
+
+
 
 \end{document}
