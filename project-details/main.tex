@@ -173,8 +173,7 @@ The main advantages of the algorithms is:
 
 
 \subsection{Linformer Attention}
-Linformer Attention uses low-rank approximations to the attention mechanism to reduce computational and memory costs by compressing the key and value vectors using linear projections.
-
+Linformer Attention \cite{linformer} uses low-rank approximations to the attention mechanism to reduce computational and memory costs by compressing the key and value vectors using linear projections.
 
 Sinong et. all introduced Linformer Attention approach to improve memory and time complexity dot-product attention. Theoretical and empirical proof that the attention dot product matrix can be approximated by low-rank matrix with using the singular value decomposition (SVD) of the key and value matrices. Authors introduced linear projection layer instead of using SVD algorithm to do not increase attention computational complexity. For simplicity, the trainable projection layer parameters can be shared between attention heads and/or between layers.
 
@@ -200,7 +199,6 @@ $$\~{P} = exp{(A)} \mul D_A^{-1} R^TR$$
 where $R \in R^{k \times n}$ matrix with i.i.d. entries from $N(0,1/k)$. JL lemma can be used to show that for any column vector $w \in R^{n}$ of matrix $V$, when $k=5log(n)/(\epsilon^2-\epsilon^3)$, we have
 $$ Pr(|| PR^TRw^T - Pw^T || < \epsilon ||PW^T||) > 1-o(1)$$
 
-
 \textbf{Theorem 2.} For any $Q,K,V \in R_{n \times d}$ if $k=min\{ \theta(9d \log{d}/\epsilon^2) \}$ there exists matrices $E,F \in R^{n \times k}$ such that for any row vector $w$ of matrix $QK^T/\sqrt{d}$ we have
 $$ Pr(|| \text{Softmax} (wE^T)FV - \text{Softmax} (w)V || < \epsilon ||\text{Softmax} (w)|| \cdot  ||V||) > 1-o(1)$$
 where
@@ -208,19 +206,46 @@ $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) $$
 
 \textit{Proof.} TODO
 
-
-
-The main advantages of the algorithms is:
-
+The main advantages of the algorithm is:
 \begin{itemize}
 \item improved computational complexity from $ O(d * n^2) $ (for dot-product attention) to $ O(n) $ for linformer attention
 \item increase memory efficiency from  $ O(n^2) $ to  $ O(n) $ respectively.
 \end{itemize}
 
 
-
 \subsection{Random Feature Attention}
-Random Feature Attention uses randomised projections to approximate the attention scores using a subset of the input sequence, then uses the subset to compute the total attention scores.
+Random Feature Attention \cite{random_feature_attention} random Fourier features to approximate a desired shift-invariant Gaussian kernel (softmax) \cite{Rahimi_2007}. The method nonlinearly transforms a pair of vectors \textbf{x} and \textbf{y} using a random feature map $\phi$; the inner product between $\phi(\textbf{x})$ and $\phi(\textbf{y})$ approximates the kernel evaluation on \textbf{x} and \textbf{y}.
+
+\textbf{Theorem 3.} \cite{Rahimi_2007}
+Let $ \phi : R^d \rightarrow R^{2D} $ be a nonlinear transformation:
+$$ \phi(x) = \sqrt{1/D} \left[ \sin(\textbf{w}_1 \cdot  \textbf{x}), ..., \sin(\textbf{w}_D \cdot  \textbf{x}), \cos(\textbf{w}_1 \cdot  \textbf{x}), ..., \cos(\textbf{w}_D \cdot  \textbf{x})  \right] $$.
+When d-dimensional random vector $w_i$ are independently sampled from $ \mathcal{N}(0, \sigma^2 \textbf{I}_d) $,
+$$ \mathop{\mathbb{E}} \left[ \phi(x) \cdot \phi(y) \right] = \exp \big(- || \textbf{x}-\textbf{y} || / 2\sigma^2 \big) $$
+
+The variance of the estimation is inversely proportional to D (Appendix A.2 \cite{orthogonal_random_features}).
+
+The random feature attention method replaces $softmax$ operator with dot product as follows:
+
+TODO
+
+$$ \exp(x y / \sigma^2) = \exp(||x||^2 / 2\sigma^2 + ||y||^2 / 2\sigma^2) \exp(-||x-y||^2 / 2\sigma^2 ) \approx \exp(||x||^2 / 2\sigma^2 + ||y||^2 / 2\sigma^2) \phi(x) \cdot \phi(y) $$
+
+Let's substitute softmax with random Fourier features in attention expression:
+
+$$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) = 
+\sum_{i} \frac{ \exp(q \cdot k_i / \sigma^2)}{ \sum_{j} \exp(q \cdot k_j / \sigma^2}) } v^T_i \approx 
+\sum_{i} \frac{\phi(q)^T \phi(k_i) v^T_i}{\sum{j} \phi(q) \cdot \phi(k_j)} = 
+\frac{ \phi(q)^T \sum_{i}\phi(k_i) \otimes v_i }{ \phi(q) \cdot \sum_{j} \phi(k) } $$
+
+where $\otimes$ denotes the outer product betweenn vectors, $\sigma^2$ corresponds to the temperature.
+
+The advantages of the algorithm are:
+\begin{itemize}
+\item RFA has a better memory efficiency than dot-product attention with softmax normalization (linear vs. quadratic) i.e. $\phi(q)$, $\sum_{i} \phi(k_i) \otimes \v_i$ and $\sum_{i} \phi(k_i)$ requires space of O(4D + 2Dd). From the oposite side, dot-product attention requires O(Nd).
+\end{itemize}
+
+
+
 
 \subsection{Nystrom Attention}
 The method uses the Nyström approximation to estimate the attention scores using a deterministic subset of the input sequence. This method is effective in reducing computational and memory costs while maintaining a high level of accuracy.
@@ -329,6 +354,23 @@ Gadgets & 13
 
 We hope you enjoy \LaTeX ing!
 
+
+
+\begin{thebibliography}{unsrt}
+
+\bibitem{linformer}
+Wang, S., Li, B. Z., Khabsa, M., Fang, H., & Ma, H. (2020). Linformer: Self-Attention with Linear Complexity. ArXiv. https://doi.org/10.48550/arXiv.2006.04768
+
+\bibitem{random_feature_attention}
+Peng, H., Pappas, N., Yogatama, D., Schwartz, R., Smith, N. A., & Kong, L. (2021). Random Feature Attention. ArXiv. https://doi.org/10.48550/arXiv.2103.02143
+
+\bibitem{Rahimi_2007}
+Ali Rahimi and Benjamin Recht. 2007. Random features for large-scale kernel machines. In Proceedings of the 20th International Conference on Neural Information Processing Systems (NIPS'07). Curran Associates Inc., Red Hook, NY, USA, 1177–1184.
+
+\bibitem{orthogonal_random_features}
+Yu, F. X., Suresh, A. T., Choromanski, K., & Kumar, S. (2016). Orthogonal Random Features. ArXiv. https://doi.org/10.48550/arXiv.1610.09072
+
+\end{thebibliography}
 
 
 \end{document}
