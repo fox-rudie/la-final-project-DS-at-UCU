@@ -248,7 +248,32 @@ The advantages of the algorithm are:
 
 
 \subsection{Nystrom Attention}
-The method uses the Nyström approximation to estimate the attention scores using a deterministic subset of the input sequence. This method is effective in reducing computational and memory costs while maintaining a high level of accuracy.
+
+The Nystromformer architecture is designed to scale linearly with the input sequence length $n$. To achieve this, it employs the Nystrom method, redesigned for efficiency in approximating self-attention. Specifically, the Nystromformer algorithm selects landmark (or Nystrom) points to reconstruct the softmax matrix in self-attention, rather than computing the full $n \times n$ softmax matrix
+
+According to the research \cite{nystrom_attention_paper}, softmax matrix S could be writen with the use of Nystrom method as following:
+$$
+S = \text{softmax}(\frac{QK^T}{\sqrt{d_q}}) = \begin{bmatrix}
+	{A_S} & {B_S} \\
+	{F_S} & {C_S}
+\end{bmatrix}
+$$
+where $A_S \in R^{m \times m}$ , $B_S \in R^{m \times (n - m)}$, $F_S \in R^{(n - m) \times m }$ and $C_S \in R^{(n - m) \times (n - m)}$.
+
+%To compute the Nystrom approximation, it is usually necessary to compute the full $QK^T$ matrix, which ends with the quadratic complexity. To overcome this issue, the following technique to approximate the $QK^T$ matrix without accessing its full form is used:
+
+We can approximate matrix $\hat{S}$ as following:
+
+$$\hat{S} = \text{softmax}(\frac{Q\tilde{K}^T}{\sqrt{d_q}}) (\text{softmax}(\frac{\tilde{Q}\tilde{K}^T}{\sqrt{d_q}})^{\dagger} \text{softmax}(\frac{\tilde{Q}{K}^T}{\sqrt{d_q}})$$
+where $\tilde{K}$ and $\tilde{Q}$ are selected landmarks from K and Q, and $\dagger$ denotes Moore-Penrose pseudoinverse.  
+
+Computing pseudoinverse is intensive task, so the researchers suggest to compute it with the iterative method \cite{pseudoiverse}, but not the SVD.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{nystrom-approximation.png}
+\caption{\label{fig:nystrom-approximation}Illustration of Nystrom approximation vs pure self-attention. They are not identical but similar.}
+\end{figure}
 
 \section{Results}
 
@@ -369,6 +394,16 @@ Ali Rahimi and Benjamin Recht. 2007. Random features for large-scale kernel mach
 
 \bibitem{orthogonal_random_features}
 Yu, F. X., Suresh, A. T., Choromanski, K., & Kumar, S. (2016). Orthogonal Random Features. ArXiv. https://doi.org/10.48550/arXiv.1610.09072
+
+\bibitem{nystrom_attention_paper}
+Yunyang Xiong, Zhanpeng Zeng, Rudrasis Chakraborty, Mingxing Tan, Glenn Fung, Yin Li and Vikas Singh.
+\newblock Nyströmformer: A Nyström-Based Algorithm for Approximating Self-Attention, 2021;
+\newblock arXiv:2102.03902.
+
+\bibitem{pseudoiverse}
+Razavi, M. K.; Kerayechian, A.; Gachpazan, M.; and Shateyi, S.
+2014. A new iterative method for finding approximate inverses of
+complex matrices. In Abstract and Applied Analysis.
 
 \end{thebibliography}
 
