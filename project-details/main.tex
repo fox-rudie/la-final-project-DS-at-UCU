@@ -126,17 +126,17 @@ Each method uses linear algebra techniques to optimise the attention mechanism a
 
 \subsection{Full Attention}
 
-Attention calculates a weighted average of the feature representation with weight proportional to the similarity score between pairs of representations. Let’s consider input $X^{n \times d}$ and projections $W_q \in R^{d \times d_q}$, $W_k \in R^{d \times d_k}$, $W_v \in R^{d \times d_v}$ referred as query, key, and value projections, where $n$ is the input length. The outputs are then computed as $Q=XW_q$, $K=XW_k$, $V=XW_v$.
+Attention calculates a weighted average of the feature representation with weight proportional to the similarity score between pairs of representations. Let’s consider input $X^{n \times d}$ and $W_q \in R^{d \times d_q}$, $W_k \in R^{d \times d_k}$, $W_v \in R^{d \times d_v}$ referred as query, key, and value projectors for input sequence with $n$ length. The projections (outputs) are then computed as $Q=XW_q$, $K=XW_k$, $V=XW_v$.
 The attention layer is defined as 
 
 $$ \text{Attention}(Q, K, V) = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big)V $$ 
 
-which requires $O(n2d)$ steps to compute and scales poorly with the large input size. An intuitive illustration of the Attention layer is presented below (source: https://theaisummer.com/self-attention/).
+which requires $O(n^2d)$ steps to compute and scales poorly with the large input size. An intuitive illustration of the Attention layer is presented in the figure \ref{fig:self-attention} below.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.5\textwidth]{self-attention-explained.png}
-\caption{\label{fig:self-attention}Illustration of self-attention mechanism.}
+\caption{\label{fig:self-attention}Illustration of self-attention mechanism \cite{self-attention-explained}.}
 \end{figure}
 
 However, the scaled dot-product attention isn't simply applied to the queries, keys and values. Instead of this, single attention components with: queries, keys and values are splited into $ h $ heads and the scaled dot-product attention is calculated over all heads in parallel.
@@ -150,21 +150,21 @@ The standard attention mechanism used in the Transformer architecture computes a
 
 \subsection{Linear Attention}
 
-Dot-product attention has wide applications in computer vision and natural language processing. However, its memory and computational costs grow quadratically with the input size. Such growth prohibits its application on high-resolution inputs. For this purpose, the efficient attention mechanism equivalent to dot-product attention is used. Linear Attention mechanism allows to reduce memory and computational costs to remedy this drawback. At the same time, empirical evaluations \ref{} demonstrated the effectiveness of its advantages.
+Dot-product attention has wide applications, but as we described in the previous section, its memory and computational costs grow quadratically with the input size. Such growth prohibits its application on high-resolution inputs. For this purpose, the efficient attention mechanism equivalent to dot-product attention is used. The Linear Attention mechanism allows for reducing memory and computational costs to remedy this drawback. At the same time, empirical evaluations \cite{linear-attention-transformer} demonstrated the effectiveness of its advantages.
 
-Efficient attention proposes the individual feature vectors $ X \in R^{n \times d} $ still pass through three linear layers to form the queries Q keys K, and values V. However, instead of interpreting the keys as n feature vectors in $R^{d_k}$, the module regards them as $d_k$ single-channel feature maps. Efficient attention uses each feature map as an overall weighting position and aggregates the value features through weighted summation to form a global context vector \ref{}. 
+Efficient attention proposes the individual feature vectors $ X \in R^{n \times d} $ still pass through three linear layers to form the queries Q keys K, and values V. However, instead of interpreting the keys as $n$ feature vectors in $R^{d_k}$, the module regards them as $d_k$ single-channel feature maps. Efficient attention uses each feature map as an overall weighting position and aggregates the value features through weighted summation to form a global context vector \cite{efficient-linear-attention}. 
 
 The equation describes linear attention presented below:
 
 $$ \text{Linear Attention}(Q, K, V) = \text{Softmax}_{row} \big(Q)\big ( \text{Softmax}_{col} \big( K \big)^T V) $$ 
 
-To proof equivalence of the considered method to dot-product attention, let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
+To prove equivalence of the considered method to dot-product attention, let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
 $$ \text{Attention}(Q, K, V) = \big( \frac{QK^T}{d_k} \big)V $$ 
 
-The linear attention can be expressed as
+Linear attention can be expressed in the following way
 $$ \text{Linear Attention}(Q, K, V) =  \big( \frac{Q}{\sqrt(d_k)} \big) \big( \frac{K^T}{\sqrt(d_k)} V ) = \frac{1}{d_k} Q \big( K^T V \big) = \frac{1}{d_k} \big(Q K^T\big) V = \text{Attention}(Q, K, V)$$ 
 
-The main advantages of the algorithms is:
+The main advantages of the algorithms are:
 
 \begin{itemize}
 \item improved computational complexity from $ O(d * n^2) $ (for dot-product attention) to $ O(d^2 * n) $ for linear attention
@@ -175,7 +175,7 @@ The main advantages of the algorithms is:
 \subsection{Linformer Attention}
 Linformer Attention \cite{linformer} uses low-rank approximations to the attention mechanism to reduce computational and memory costs by compressing the key and value vectors using linear projections.
 
-Sinong et. all introduced Linformer Attention approach to improve memory and time complexity dot-product attention. Theoretical and empirical proof that the attention dot product matrix can be approximated by low-rank matrix with using the singular value decomposition (SVD) of the key and value matrices. Authors introduced linear projection layer instead of using SVD algorithm to do not increase attention computational complexity. For simplicity, the trainable projection layer parameters can be shared between attention heads and/or between layers.
+Sinong at. al \cite{linformer} introduced the Linformer Attention approach to improve memory and time complexity dot-product attention. Theoretical and empirical proof that the attention dot product matrix can be approximated by low-rank matrix with using the singular value decomposition (SVD) of the key and value matrices. Authors introduced linear projection layer instead of using SVD algorithm to do not increase attention computational complexity. For simplicity, the trainable projection layer parameters can be shared between attention heads and/or between layers.
 
 The Linformer attention can be expressed as:
 
@@ -183,7 +183,7 @@ $$ \text{Linformer Attention}(Q, K, V) = \text{Softmax} \big( \frac{QK^T}{\sqrt{
 
 where $E, F \in R^{k \times n}$ are projection matrices of key and value $K, V \in R^{n \times d}$ to low-rank $ R^{k \times d}$ matrices respectively.
 
-To proof such possibility above, paper provides theoretical analysis of the spectrum of self attention matrices in two teorems.
+To prove such possibility above, the paper provides a theoretical analysis of the spectrum of self-attention matrices and defines two theorems.
 
 \textbf{Theorem 1.} For any $Q,K,V$ there exists low-rank matrix $\~{P}$ such that
 $$ Pr(|| \~{P}w^T - Pw^T || < \epsilon ||PW^T||) > 1-o(1)$$ and $$ rank(\~{P})=\theta(log(n)) $$
@@ -194,7 +194,7 @@ $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) $$
 $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) = \exp{(A)} \cdot  D_A^{-1} $$
 where $ A = \frac{QK^T}{\sqrt{d_k}} $, $D_A$ is $R^{n \times n}$ diagonal matrix.
 
-Based on Johnson-Linderstrauss (JL) lemma low-rank $\~{P}$ can be constructed in the following way
+Based on Johnson-Linderstrauss (JL) lemma \cite{jonson-lindenstrauss} low-rank matrix $\~{P}$ can be constructed in the following way
 $$\~{P} = exp{(A)} \mul D_A^{-1} R^TR$$
 where $R \in R^{k \times n}$ matrix with i.i.d. entries from $N(0,1/k)$. JL lemma can be used to show that for any column vector $w \in R^{n}$ of matrix $V$, when $k=5log(n)/(\epsilon^2-\epsilon^3)$, we have
 $$ Pr(|| PR^TRw^T - Pw^T || < \epsilon ||PW^T||) > 1-o(1)$$
@@ -204,9 +204,7 @@ $$ Pr(|| \text{Softmax} (wE^T)FV - \text{Softmax} (w)V || < \epsilon ||\text{Sof
 where
 $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) $$
 
-\textit{Proof.} TODO
-
-The main advantages of the algorithm is:
+The main advantages of the algorithm are:
 \begin{itemize}
 \item improved computational complexity from $ O(d * n^2) $ (for dot-product attention) to $ O(n) $ for linformer attention
 \item increase memory efficiency from  $ O(n^2) $ to  $ O(n) $ respectively.
@@ -214,21 +212,19 @@ The main advantages of the algorithm is:
 
 
 \subsection{Random Feature Attention}
-Random Feature Attention \cite{random_feature_attention} random Fourier features to approximate a desired shift-invariant Gaussian kernel (softmax) \cite{Rahimi_2007}. The method nonlinearly transforms a pair of vectors \textbf{x} and \textbf{y} using a random feature map $\phi$; the inner product between $\phi(\textbf{x})$ and $\phi(\textbf{y})$ approximates the kernel evaluation on \textbf{x} and \textbf{y}.
+Random Feature Attention (RFA) \cite{random_feature_attention} is based on using random Fourier features to approximate a desired shift-invariant Gaussian kernel (softmax) \cite{Rahimi_2007} from dot-product attention. The method nonlinearly transforms a pair of vectors \textbf{x} and \textbf{y} using a random feature map $\phi$. The inner product between $\phi(\textbf{x})$ and $\phi(\textbf{y})$ can be approximated with the kernel evaluation on \textbf{x} and \textbf{y}.
 
 \textbf{Theorem 3.} \cite{Rahimi_2007}
 Let $ \phi : R^d \rightarrow R^{2D} $ be a nonlinear transformation:
 $$ \phi(x) = \sqrt{1/D} \left[ \sin(\textbf{w}_1 \cdot  \textbf{x}), ..., \sin(\textbf{w}_D \cdot  \textbf{x}), \cos(\textbf{w}_1 \cdot  \textbf{x}), ..., \cos(\textbf{w}_D \cdot  \textbf{x})  \right] $$.
-When d-dimensional random vector $w_i$ are independently sampled from $ \mathcal{N}(0, \sigma^2 \textbf{I}_d) $,
+When d-dimensional random vector $w_i$ are independently sampled from $ \mathcal{N}(0, \sigma^2 \textbf{I}_d) $ and $D$ - defines dimension of projection,
 $$ \mathop{\mathbb{E}} \left[ \phi(x) \cdot \phi(y) \right] = \exp \big(- || \textbf{x}-\textbf{y} || / 2\sigma^2 \big) $$
 
 The variance of the estimation is inversely proportional to D (Appendix A.2 \cite{orthogonal_random_features}).
 
-The random feature attention method replaces $softmax$ operator with dot product as follows:
+The unbiased estimate of $ \exp (< \cdot , \cdot >) $ can be estimated using theorem 3 and used for replacing $softmax$ layer in the dot-product attention:
 
-TODO
-
-$$ \exp(x y / \sigma^2) = \exp(||x||^2 / 2\sigma^2 + ||y||^2 / 2\sigma^2) \exp(-||x-y||^2 / 2\sigma^2 ) \approx \exp(||x||^2 / 2\sigma^2 + ||y||^2 / 2\sigma^2) \phi(x) \cdot \phi(y) $$
+$$ \exp(x \cdot y / \sigma^2) = \exp(||x||^2 / 2\sigma^2 + ||y||^2 / 2\sigma^2) \exp(-||x-y||^2 / 2\sigma^2 ) \approx \exp(||x||^2 / 2\sigma^2 + ||y||^2 / 2\sigma^2) \phi(x) \cdot \phi(y) $$
 
 Let's substitute softmax with random Fourier features in attention expression:
 
@@ -239,11 +235,10 @@ $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) =
 
 where $\otimes$ denotes the outer product betweenn vectors, $\sigma^2$ corresponds to the temperature.
 
-The advantages of the algorithm are:
+The advantages of the proposed algorithm are:
 \begin{itemize}
 \item RFA has a better memory efficiency than dot-product attention with softmax normalization (linear vs. quadratic) i.e. $\phi(q)$, $\sum_{i} \phi(k_i) \otimes \v_i$ and $\sum_{i} \phi(k_i)$ requires space of O(4D + 2Dd). From the oposite side, dot-product attention requires O(Nd).
 \end{itemize}
-
 
 
 
@@ -251,7 +246,7 @@ The advantages of the algorithm are:
 
 The Nystromformer architecture is designed to scale linearly with the input sequence length $n$. To achieve this, it employs the Nystrom method, redesigned for efficiency in approximating self-attention. Specifically, the Nystromformer algorithm selects landmark (or Nystrom) points to reconstruct the softmax matrix in self-attention, rather than computing the full $n \times n$ softmax matrix
 
-According to the research \cite{nystrom_attention_paper}, softmax matrix S could be writen with the use of Nystrom method as following:
+According to the research \cite{nystrom_attention_paper}, softmax matrix S could be written with the use of Nystrom method as follows:
 $$
 S = \text{softmax}(\frac{QK^T}{\sqrt{d_q}}) = \begin{bmatrix}
 	{A_S} & {B_S} \\
@@ -267,7 +262,7 @@ We can approximate matrix $\hat{S}$ as following:
 $$\hat{S} = \text{softmax}(\frac{Q\tilde{K}^T}{\sqrt{d_q}}) (\text{softmax}(\frac{\tilde{Q}\tilde{K}^T}{\sqrt{d_q}})^{\dagger} \text{softmax}(\frac{\tilde{Q}{K}^T}{\sqrt{d_q}})$$
 where $\tilde{K}$ and $\tilde{Q}$ are selected landmarks from K and Q, and $\dagger$ denotes Moore-Penrose pseudoinverse.  
 
-Computing pseudoinverse is intensive task, so the researchers suggest to compute it with the iterative method \cite{pseudoiverse}, but not the SVD.
+Computing pseudoinverse is an intensive task, so the researchers suggest computing it with the iterative method \cite{pseudoiverse}, but not the SVD.
 
 \begin{figure}[h]
 \centering
@@ -280,7 +275,7 @@ Computing pseudoinverse is intensive task, so the researchers suggest to compute
 \subsection{Computational complexity}
 
 This section analyses the efficiency advantage of attention approaches considered in this research over dot-product attention in memory \ref{fig:comutation-time} and computation \ref{tab:mem-complexity}. 
-To measure computational complexity, we measure inference time takes to calculate values on NVIDIA GPU T4 for $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
+To measure computational complexity, we measure the inference time that it takes to compute values on NVIDIA GPU T4 for $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
 
 
 \begin{figure*}[!h]
@@ -306,16 +301,20 @@ To measure computational complexity, we measure inference time takes to calculat
 \centering
 \begin{tabular}{l|c|c}
 Method & Memory complexity & $N=32*32, D=32$ \\\hline
-Dot-product attention & $ O(n^2) $ & $2^{20}$ \\
-Linear attention & $ O(dn+d^2) $ & $2^{11}$ \\
-Linformer Attention & ... & ... \\
-Random Feature Attention & ... & ... \\
-Nystrom Attention & ... & ...
+Dot-product attention & $ O(n^2) $ & $\approx 2^{20}$ \\
+Linear attention & $ O(dn+d^2) $ & $\approx 2^{11}$ \\
+Linformer Attention & $ O(n) $ & $ \approx 2^{10} $ \\
+Random Feature Attention & $O(4D + 2Dd)$ & $\approx 2^{12}$ \\
+Nystrom Attention & $O(n)$ & $\approx 2^{10}$
 \end{tabular}
 \caption{\label{tab:mem-complexity}Memory usage.}
 \end{table}
 
 
+
+\section{Conclusions}
+
+We investigated several methods of dot-product attention mechanism optimization in this approach using linear algebra matrix transformation techniques. It was empirically shown, that the linear attention approach has smaller computational complexity (execution speed) compared to observed methods. 
 
 
 
@@ -383,8 +382,20 @@ We hope you enjoy \LaTeX ing!
 
 \begin{thebibliography}{unsrt}
 
+\bibitem{self-attention-explained}
+Adaloglou, N. (2021, March 25). Why multi-head self attention works: Math, intuitions and 10+1 hidden insights. AI Summer. Retrieved March 4, 2023, from https://theaisummer.com/self-attention/ 
+
+\bibitem{linear-attention-transformer}
+Katharopoulos, A., Vyas, A., Pappas, N., & Fleuret, F. (2020). Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention. ArXiv. https://doi.org/10.48550/arXiv.2006.16236
+
+\bibitem{efficient-linear-attention}
+Shen, Z., Zhang, M., Zhao, H., Yi, S., & Li, H. (2018). Efficient Attention: Attention with Linear Complexities. ArXiv. https://doi.org/10.48550/arXiv.1812.01243
+
 \bibitem{linformer}
 Wang, S., Li, B. Z., Khabsa, M., Fang, H., & Ma, H. (2020). Linformer: Self-Attention with Linear Complexity. ArXiv. https://doi.org/10.48550/arXiv.2006.04768
+
+\bibitem{jonson-lindenstrauss}
+Ghojogh, B., Ghodsi, A., Karray, F., & Crowley, M. (2021). Johnson-Lindenstrauss Lemma, Linear and Nonlinear Random Projections, Random Fourier Features, and Random Kitchen Sinks: Tutorial and Survey. ArXiv. https://doi.org/10.48550/arXiv.2108.04172
 
 \bibitem{random_feature_attention}
 Peng, H., Pappas, N., Yogatama, D., Schwartz, R., Smith, N. A., & Kong, L. (2021). Random Feature Attention. ArXiv. https://doi.org/10.48550/arXiv.2103.02143
