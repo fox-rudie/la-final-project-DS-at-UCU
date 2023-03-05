@@ -56,10 +56,10 @@ sequence.
 -->
 # Kernel-based attention optimization methods
 
-## Random feature attention
+### Random feature attention (RFA)
 
 $
-P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) \approx \\
+\text{RFA}(Q, K, V) =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big)V \approx \\
 \approx \frac{ \phi(q)^T \sum_{i}\phi(k_i) \otimes v_i }{ \phi(q) \cdot \sum_{j} \phi(k) }
 $
 
@@ -72,7 +72,7 @@ $
 # Low-rank attention optimization methods
 ## Linear Attention
 
-$\text{Linear Attention}(Q, K, V) = \\ =  \big( \frac{Q}{\sqrt(d_k)} \big) \big( \frac{K^T}{\sqrt(d_k)} V ) = \\ = \frac{1}{d_k} Q \big( K^T V \big) =  \frac{1}{d_k} \big(Q K^T\big) V = \text{Attention}(Q, K, V)$
+$\text{Linear Attention}(Q, K, V) = \\ =  \big( \frac{Q}{\sqrt(d_k)} \big) \big( \frac{K^T}{\sqrt(d_k)} V ) = \\ = \frac{1}{d_k} Q \big( K^T V \big) =  \frac{1}{d_k} \big(Q K^T\big) V = \\ = \text{Attention}(Q, K, V)$
 
 ![bg right width:400px](./images/linformer-attention.jpg)
 
@@ -91,10 +91,9 @@ $\text{Linformer}(Q, K, V) = \\ = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \
 
 ## Nystrom Attention
 
-###### $S = \text{softmax}(\frac{QK^T}{\sqrt{d_q}}) = \begin{bmatrix} {A_S} & {B_S} \\{F_S} & {C_S}\end{bmatrix}$
+###### $\text{Attention}(Q, K, V) = \text{softmax}(\frac{QK^T}{\sqrt{d_q}})V = \begin{bmatrix} {A_S} & {B_S} \\{F_S} & {C_S}\end{bmatrix}$
 
-
-###### $\hat{S} = \text{softmax}(\frac{Q\tilde{K}^T}{\sqrt{d_q}}) (\text{softmax}(\frac{\tilde{Q}\tilde{K}^T}{\sqrt{d_q}}))^{\dagger} \text{softmax}(\frac{\tilde{Q}{K}^T}{\sqrt{d_q}})$
+###### $\hat{\text{Nystrom Attention(Q, K,V)}} = [\text{softmax}(\frac{Q\tilde{K}^T}{\sqrt{d_q}}) (\text{softmax}(\frac{\tilde{Q}\tilde{K}^T}{\sqrt{d_q}}))^{\dagger} \text{softmax}(\frac{\tilde{Q}{K}^T}{\sqrt{d_q}})]V$
 
 ![width:700px](./images/nystromer.jpg)
 
@@ -103,6 +102,7 @@ $\text{Linformer}(Q, K, V) = \\ = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \
 # Attention Complexity
 
 ![bg right width:600px](./images/speed_cuda_64.png)
+
 
 ---
 
