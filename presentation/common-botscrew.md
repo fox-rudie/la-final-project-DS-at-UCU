@@ -27,7 +27,7 @@ Oleksandr Korniienko
 
 # Project goals
 
-1. Investigate method of imrovement for dot-product attention.
+1. Investigate method of imrovement for dot-product (softmax) attention.
 2. Implement and evaluate method on CIFAR-10 image classification benchmark.
 
 ![bg right width:200px](./images/attention.png)
@@ -59,95 +59,80 @@ sequence.
 ## Random feature attention
 
 $
-P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) \approx  
-\frac{ \phi(q)^T \sum_{i}\phi(k_i) \otimes v_i }{ \phi(q) \cdot \sum_{j} \phi(k) }
+P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) \approx \\
+\approx \frac{ \phi(q)^T \sum_{i}\phi(k_i) \otimes v_i }{ \phi(q) \cdot \sum_{j} \phi(k) }
 $
 
+![bg right width:600px](./images/random-feature-attention.jpg)
+
 <!-- footer: Andrii Ruda, Anton Brazhniy, Oleksandr Korniienko -->
+
+---
+
+# Low-rank attention optimization methods
+## Linear Attention
+
+$\text{Linear Attention}(Q, K, V) = \\ =  \big( \frac{Q}{\sqrt(d_k)} \big) \big( \frac{K^T}{\sqrt(d_k)} V ) = \\ = \frac{1}{d_k} Q \big( K^T V \big) =  \frac{1}{d_k} \big(Q K^T\big) V = \text{Attention}(Q, K, V)$
+
+![bg right width:400px](./images/linformer-attention.jpg)
+
+---
+
+# Low-rank attention optimization methods
+## Linformer Attention
+
+$\text{Linformer}(Q, K, V) = \\ = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big)V   \approx \\ \approx \text{Softmax} \big( \frac{Q \big(EK\big)^T}{\sqrt{d_k}} \big) \big(FV\big)$
+
+![bg left width:400px](./images/linformer-attention.jpg)
+
 ---
 
 # Low-rank attention optimization methods
 
+## Nystrom Attention
 
-<div class="grid grid-cols-2 gap-4">
-<div>
+###### $S = \text{softmax}(\frac{QK^T}{\sqrt{d_q}}) = \begin{bmatrix} {A_S} & {B_S} \\{F_S} & {C_S}\end{bmatrix}$
 
 
+###### $\hat{S} = \text{softmax}(\frac{Q\tilde{K}^T}{\sqrt{d_q}}) (\text{softmax}(\frac{\tilde{Q}\tilde{K}^T}{\sqrt{d_q}}))^{\dagger} \text{softmax}(\frac{\tilde{Q}{K}^T}{\sqrt{d_q}})$
 
-</div>
-<div>
-
-## Column 2
-
-Tempore ad exercitationem necessitatibus nulla, optio distinctio illo non similique? Laborum dolor odio, ipsam incidunt corrupti quia nemo quo exercitationem adipisci quidem nesciunt deserunt repellendus inventore deleniti reprehenderit at earum.
-
-</div>
-</div>
+![width:700px](./images/nystromer.jpg)
 
 ---
 
 # Attention Complexity
 
-| Method                                 | CC  | MC              | $MC,N=32\times32,D=32$        |
-| -------------------------------------- | ----| ----------------| ----------------------------- |
-| Dot-product attention Linear attention | ... | $O(n^2)$        | $2^{20}$                      |
-| Linear attention                       | ... | $O(dn + d^2)$   | $2^{11}$                      |
-| Linformer Attention                    | ... | $O(n)$          | $2^{10}$                      |
-| Random Feature Attention               | ... | $O(4D + 2Dd)$   | $2^{12}$                      |
-| Nystrom Attention                      | ... | $O(n)$          | $2^{10}$                      |
+![bg right width:600px](./images/speed_cuda_64.png)
+
+---
+
+# Attention Complexity
+
+| Method                                 | Computational    | Memory             |
+| -------------------------------------- | ---------------- | ------------------ |
+| Dot-product (softmax) attention        | $O(d^2n + dn^2)$ | $O(nd^2)$          |
+| Linear attention                       | $O(d^2n)$        | $O(dn + d^2)$      |
+| Linformer Attention                    | $O(n)$           | $O(n)$             |
+| Random Feature Attention               | $O(nd)$          | $O(4D + 2Dd)$      |
+| Nystrom Attention                      | $O(n)$           | $O(n)$             |
 
 ---
 
 # Attention accuracy
 
+![bg right width:600px](./images/attention-accuracy.jpg)
+
 ---
 
 # Conclusions
 
-<!-- 1. Use jsonPath to filter products: 
-   ```$.[?(@.category=='{{product_type}}')].price```
-   Result: ```[150, 40]```
-1. Replace comma with plus ```[150+ 40]```
-2. Replace brakets with spaces ```150 + 40```
-3. Use math endpoint to get the sum ```190.0```
-
+- Investigated dot-product attention mechanism optimization using **linear algebra** matrix transformation techniques.
+- Empirically demonstrated that linear attention approach has lower computational complexity than observed methods.
+- Linformer attention mechanism showed best classification accuracy among observer models with similar hyper-parameter sets.
 
 ---
+<!--fit-->
 
-demo & possible improvements
+Thanks for your attention!
 
----
-
-### task 2
-
-how to get a time diff?
-
-hint:
-```js
-POST /api/v1/utils/datetime/now
-
-{
-  "timeZone" : "UTC",
-  "outputFormat" : "EPOCH"
-}
-```
-
----
-
-the docs are available here
-https://common.botscrew.net/
-
----
-
-the future of common.botscrew.net
-
-1. mapping the data to messages (generic, images etc.)
-2. introduce ```functions``` — predefined api calls
-3. add sequencing (to avoid a lot of API calls)
-
----
-
-## <!--fit thanks
-
-### time for q&a 
--->
+![bg right width:600px](./images/60-please.png)
