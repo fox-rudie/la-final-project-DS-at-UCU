@@ -275,7 +275,8 @@ Computing pseudoinverse is an intensive task, so the researchers suggest computi
 \subsection{Computational complexity}
 
 This section analyses the efficiency advantage of attention approaches considered in this research over dot-product attention in memory \ref{fig:comutation-time} and computation \ref{tab:mem-complexity}. 
-To measure computational complexity, we measure the inference time that it takes to compute values on NVIDIA GPU T4 for $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
+To measure computational complexity, we measure the inference time that it takes to compute values on NVIDIA GPU T4 for input data $ X \in R^{ batch\_size \times num\_head \times n \times d }$, where $\textbf{batch size}=32$, $\textbf{number of heads}=4$, sequence length $\textbf{n} \in \{128, 256, 512, 768, 1024, 2048\}$ and features dimension size $\textbf{d} \in \{32, 64\}$.
+Typically sequence length is defined as image pixel size, and equals 1024 for image 32x32.
 
 
 \begin{figure*}[!h]
