@@ -323,14 +323,14 @@ Nystrom Attention & ... & $O(n)$ & $\approx 2^{10}$
 
 We report the validation accuracy of observed models on the CIFAR-10 \cite{cifar-10}  benchmark for the 10-class image classification task. We follow the standard evaluation protocols, train the model on the training set, report the results on the validation set, and compare them to our baseline - dot-product attention. All models are trained on Tesla A100 GPUs with 50 epochs (~8k updates). The results of model accuracy depend on the iteration step and are presented in figure \ref{fig:attention-accuracy}.
 
-\textbf{Implementation details.} Our models are trained with the cross-entropy objective. We use a batch size of 256, Adam optimizer with learning rate 5e-4, and cosine annealing scheduler, optimal parameters were estimated automatically by Torch Lightning tool. Input image size is 32x32, dot-product multi-attention embedding size 256 with 8 heads. We reduced embedding size by 8 times for Linformer, and selected a fixed number of landmarks for Nystrom attention to 64.
+\textbf{Implementation details.} Our models are trained with the cross-entropy objective. We use a batch size of 256, Adam optimizer with learning rate 5e-4, and cosine annealing scheduler, optimal parameters were estimated automatically by the Torch Lightning tool \footnote{\url{https://pytorch-lightning.readthedocs.io/en/stable/}} . Input image size is 32x32, dot-product multi-attention embedding size 256 with 8 heads. We reduced embedding size by 8 times for Linformer, and selected a fixed number of landmarks for Nystrom attention to 64.
  Please find more details the project github \footnote{\url{https://github.com/fox-rudie/la-final-project-DS-at-UCU/tree/dev}}.
 
 
 
 \section{Conclusions}
 
-We investigated several methods of dot-product attention mechanism optimization in this approach using linear algebra matrix transformation techniques. It was empirically shown, that the linear attention approach has smaller computational complexity (execution speed) compared to observed methods. The Linformer attention mechanism showed the best classification accuracy comparing to other observer models with similar hyper-parameters set.
+We investigated several methods of dot-product attention mechanism optimization in this approach using linear algebra matrix transformation techniques. It was empirically shown, that the linear attention approach has smaller computational complexity (execution speed) compared to observed methods. The Linformer attention mechanism showed the best classification accuracy compared to other observer models with similar hyper-parameters sets. Our code and setup are available at  \url{https://github.com/fox-rudie/la-final-project-DS-at-UCU/tree/dev}.
 
 
 \begin{thebibliography}{unsrt}
