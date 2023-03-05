@@ -134,5 +134,3 @@ $\text{Linformer}(Q, K, V) = \\ = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \
 <!--fit-->
 
 Thanks for your attention!
-
-![bg right width:600px](./images/60-please.png)
