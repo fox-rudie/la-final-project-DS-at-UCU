@@ -105,33 +105,32 @@ Anton \textsc{Brazhnyi}\\Olexandr \textsc{Korniienko}\\Andrii \textsc{Ruda}\\[1c
 \end{titlepage}
 
 \begin{abstract}
-Attention is a critical component of transformer models, but its computational complexity limits its scalability. This project investigates linear algebra-based approaches to optimise the attention mechanism's performance, including low-rank approximations, kernels/factorisation, and other methods. We provide a detailed analysis of the computational complexity and compare their empirical performance on an image classification task.
+Attention is a critical component of transformer models, but its computational complexity limits its scalability. This project investigates linear algebra-based approaches to optimize the attention mechanism's performance, including low-rank approximations and kernels/factorization methods. We provide a detailed analysis of the computational complexity and compare their empirical performance on an image classification task.
 \end{abstract}
 
 \section{Introduction}
 The Transformer architecture has become a cornerstone in modern deep learning and has led to numerous breakthroughs in natural language processing, computer vision, and other areas. The Transformer's attention mechanism has been shown to be a crucial component in its success. However, computing the attention scores for all pairs of positions in an input sequence results in quadratic time and memory complexity with respect to the sequence length, making the mechanism slow and memory-intensive for long input sequences.
 
-In this project, we explore various methods for optimising the attention mechanism in the Transformer architecture. We focus on five methods: 
+In this project, we explore various methods for optimizing the attention mechanism in the Transformer architecture. We focus on four methods: 
 \begin{enumerate}
-\item Full Attention
 \item Linear Attention
 \item Linformer Attention
 \item Random Feature Attention
 \item Nystrom Attention
 \end{enumerate}
-Each method uses linear algebra techniques to optimise the attention mechanism and reduce the computational and memory costs of the Transformer architecture. We will provide an overview of each method and compare their computational complexities and performance on an image classification task.
+Each method uses linear algebra techniques to optimize the attention mechanism and reduce the computational and memory costs of the Transformer architecture. We will provide an overview of each method and compare their computational complexities and performance on an image classification task.
 
 
 \section{Quick methods overview}
 
-\subsection{Full Attention}
+\subsection{Softmax Attention}
 
-Attention calculates a weighted average of the feature representation with weight proportional to the similarity score between pairs of representations. Let’s consider input $X^{n \times d}$ and $W_q \in R^{d \times d_q}$, $W_k \in R^{d \times d_k}$, $W_v \in R^{d \times d_v}$ referred as query, key, and value projectors for input sequence with $n$ length. The projections (outputs) are then computed as $Q=XW_q$, $K=XW_k$, $V=XW_v$.
+Attention calculates a weighted average of the feature representation with weights proportional to the similarity score between pairs of representations. Let’s consider input $X^{n \times d}$ and $W_q \in R^{d \times d_q}$, $W_k \in R^{d \times d_k}$, $W_v \in R^{d \times d_v}$ referred as query, key, and value projectors for input sequence with $n$ length. The projections (outputs) are then computed as $Q=XW_q$, $K=XW_k$, $V=XW_v$.
 The attention layer is defined as 
 
 $$ \text{Attention}(Q, K, V) = \text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big)V $$ 
 
-which requires $O(n^2d)$ steps to compute and scales poorly with the large input size. An intuitive illustration of the Attention layer is presented in the figure \ref{fig:self-attention} below.
+which requires $O(n^2d)$ steps to compute and scales poorly with the large input size. An intuitive illustration of the Attention layer is presented in figure \ref{fig:self-attention} below.
 
 \begin{figure}[h]
 \centering
@@ -139,7 +138,7 @@ which requires $O(n^2d)$ steps to compute and scales poorly with the large input
 \caption{\label{fig:self-attention}Illustration of self-attention mechanism \cite{self-attention-explained}.}
 \end{figure}
 
-However, the scaled dot-product attention isn't simply applied to the queries, keys and values. Instead of this, single attention components with: queries, keys and values are splited into $ h $ heads and the scaled dot-product attention is calculated over all heads in parallel.
+However, the scaled dot-product attention isn't simply applied to the queries, keys and values. Instead of this, single attention components with: queries, keys and values are split into $ h $ heads, and the scaled dot-product attention is calculated over all heads in parallel.
 
 $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1,...,\text{head}_h)W^O $$
 
@@ -152,13 +151,13 @@ The standard attention mechanism used in the Transformer architecture computes a
 
 Dot-product attention has wide applications, but as we described in the previous section, its memory and computational costs grow quadratically with the input size. Such growth prohibits its application on high-resolution inputs. For this purpose, the efficient attention mechanism equivalent to dot-product attention is used. The Linear Attention mechanism allows for reducing memory and computational costs to remedy this drawback. At the same time, empirical evaluations \cite{linear-attention-transformer} demonstrated the effectiveness of its advantages.
 
-Efficient attention proposes the individual feature vectors $ X \in R^{n \times d} $ still pass through three linear layers to form the queries Q keys K, and values V. However, instead of interpreting the keys as $n$ feature vectors in $R^{d_k}$, the module regards them as $d_k$ single-channel feature maps. Efficient attention uses each feature map as an overall weighting position and aggregates the value features through weighted summation to form a global context vector \cite{efficient-linear-attention}. 
+Linear attention proposes the individual feature vectors $ X \in R^{n \times d} $ still pass through three linear layers to form the queries Q keys K, and values V. However, instead of interpreting the keys as $n$ feature vectors in $R^{d_k}$, the module regards them as $d_k$ single-channel feature maps. Linear attention uses each feature map as an overall weighting position and aggregates the value features through weighted summation to form a global context vector \cite{efficient-linear-attention}. 
 
 The equation describes linear attention presented below:
 
 $$ \text{Linear Attention}(Q, K, V) = \text{Softmax}_{row} \big(Q)\big ( \text{Softmax}_{col} \big( K \big)^T V) $$ 
 
-To prove equivalence of the considered method to dot-product attention, let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
+To prove the equivalence of the considered method to dot-product attention, let's replace Softmax normalizing function to $1 / \sqrt{d}$, so the original formula takes a form:
 $$ \text{Attention}(Q, K, V) = \big( \frac{QK^T}{d_k} \big)V $$ 
 
 Linear attention can be expressed in the following way
@@ -175,7 +174,7 @@ The main advantages of the algorithms are:
 \subsection{Linformer Attention}
 Linformer Attention \cite{linformer} uses low-rank approximations to the attention mechanism to reduce computational and memory costs by compressing the key and value vectors using linear projections.
 
-Sinong at. al \cite{linformer} introduced the Linformer Attention approach to improve memory and time complexity dot-product attention. Theoretical and empirical proof that the attention dot product matrix can be approximated by low-rank matrix with using the singular value decomposition (SVD) of the key and value matrices. Authors introduced linear projection layer instead of using SVD algorithm to do not increase attention computational complexity. For simplicity, the trainable projection layer parameters can be shared between attention heads and/or between layers.
+Sinong at. al \cite{linformer} introduced the Linformer Attention approach to improve memory and time complexity dot-product attention. Theoretical and empirical proof that the attention dot product matrix can be approximated by low-rank matrix with using the singular value decomposition (SVD) of the key and value matrices. Authors introduced a linear projection layer instead of using SVD algorithm to avoid calculating the decomposition for each attention matrix. For simplicity, the trainable projection layer parameters can be shared between attention heads and/or between layers.
 
 The Linformer attention can be expressed as:
 
@@ -206,7 +205,7 @@ $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) $$
 
 The main advantages of the algorithm are:
 \begin{itemize}
-\item improved computational complexity from $ O(d * n^2) $ (for dot-product attention) to $ O(n) $ for linformer attention
+\item improved computational complexity from $ O(d * n^2) $ (for dot-product attention) to $ O(n) $ for Linformer attention
 \item increase memory efficiency from  $ O(n^2) $ to  $ O(n) $ respectively.
 \end{itemize}
 
@@ -233,11 +232,11 @@ $$ P =\text{Softmax} \big( \frac{QK^T}{\sqrt{d_k}} \big) =
 \sum_{i} \frac{\phi(q)^T \phi(k_i) v^T_i}{\sum{j} \phi(q) \cdot \phi(k_j)} = 
 \frac{ \phi(q)^T \sum_{i}\phi(k_i) \otimes v_i }{ \phi(q) \cdot \sum_{j} \phi(k) } $$
 
-where $\otimes$ denotes the outer product betweenn vectors, $\sigma^2$ corresponds to the temperature.
+where $\otimes$ denotes the outer product between vectors, $\sigma^2$ corresponds to the temperature.
 
 The advantages of the proposed algorithm are:
 \begin{itemize}
-\item RFA has a better memory efficiency than dot-product attention with softmax normalization (linear vs. quadratic) i.e. $\phi(q)$, $\sum_{i} \phi(k_i) \otimes \v_i$ and $\sum_{i} \phi(k_i)$ requires space of O(4D + 2Dd). From the oposite side, dot-product attention requires O(Nd).
+\item RFA has a better memory efficiency than dot-product attention with softmax normalization (linear vs. quadratic) i.e. $\phi(q)$, $\sum_{i} \phi(k_i) \otimes \v_i$ and $\sum_{i} \phi(k_i)$ requires space of O(4D + 2Dd). From the opposite side, dot-product attention requires O(Nd).
 \end{itemize}
 
 
@@ -246,7 +245,7 @@ The advantages of the proposed algorithm are:
 
 The Nystromformer architecture is designed to scale linearly with the input sequence length $n$. To achieve this, it employs the Nystrom method, redesigned for efficiency in approximating self-attention. Specifically, the Nystromformer algorithm selects landmark (or Nystrom) points to reconstruct the softmax matrix in self-attention, rather than computing the full $n \times n$ softmax matrix
 
-According to the research \cite{nystrom_attention_paper}, softmax matrix S could be written with the use of Nystrom method as follows:
+According to the research \cite{nystrom_attention_paper}, softmax matrix S could be written with the use of the Nystrom method as follows:
 $$
 S = \text{softmax}(\frac{QK^T}{\sqrt{d_q}}) = \begin{bmatrix}
 	{A_S} & {B_S} \\
@@ -323,7 +322,7 @@ Nystrom Attention & $O(n)$ & $O(n)$
 
 We report the validation accuracy of observed models on the CIFAR-10 \cite{cifar-10}  benchmark for the 10-class image classification task. We follow the standard evaluation protocols, train the model on the training set, report the results on the validation set, and compare them to our baseline - dot-product attention. All models are trained on Tesla A100 GPUs with 50 epochs (~8k updates). The results of model accuracy depend on the iteration step and are presented in figure \ref{fig:attention-accuracy}.
 
-\textbf{Implementation details.} Our models are trained with the cross-entropy objective. We use a batch size of 256, Adam optimizer with learning rate 5e-4, and cosine annealing scheduler, optimal parameters were estimated automatically by the Torch Lightning tool \footnote{\url{https://pytorch-lightning.readthedocs.io/en/stable/}} . Input image size is 32x32, dot-product multi-attention embedding size 256 with 8 heads. We reduced embedding size by 8 times for Linformer, and selected a fixed number of landmarks for Nystrom attention to 64.
+\textbf{Implementation details.} Our models are trained with the cross-entropy objective. We use a batch size of 256, Adam optimizer with learning rate 5e-4, and cosine annealing scheduler, optimal parameters were estimated automatically by the Torch Lightning tool \footnote{\url{https://pytorch-lightning.readthedocs.io/en/stable/}}. Input image size is 32x32, dot-product multi-attention embedding size 256 with 8 heads. We reduced embedding size by 8 times for Linformer, and selected a fixed number of landmarks for Nystrom attention to 64.
  Please find more details on the project github \footnote{\url{https://github.com/fox-rudie/la-final-project-DS-at-UCU/tree/dev}}.
 
 
